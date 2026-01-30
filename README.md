@@ -1,15 +1,17 @@
 # 📅 AI Calendar Agent
 
-An intelligent calendar assistant powered by LangGraph and Groq's Llama 3.3 that helps you manage your Google Calendar through natural language conversations.
+An intelligent calendar assistant powered by LangGraph and Groq's Llama 3.3 that helps you manage your Google Calendar through natural language conversations. Available in both CLI and web interface!
 
 ## ✨ Features
 
-- **List Events** - View your upcoming calendar events
-- **Create Events** - Schedule new events with natural language
-- **Update Events** - Modify existing events with fuzzy matching
-- **Smart Date/Time Handling** - Understands relative dates like "tomorrow", "next week"
-- **Partial Match Search** - Find events even with incomplete titles
-- **Conversational Interface** - Natural back-and-forth dialogue
+- **📋 List Events** - View your upcoming calendar events
+- **➕ Create Events** - Schedule new events with natural language
+- **✏️ Update Events** - Modify existing events with fuzzy matching
+- **🗑️ Delete Events** - Remove events from your calendar
+- **🕐 Smart Date/Time Handling** - Understands relative dates like "tomorrow", "next week"
+- **🔍 Partial Match Search** - Find events even with incomplete titles
+- **💬 Conversational Interface** - Natural back-and-forth dialogue
+- **🖥️ Dual Interface** - Choose between CLI or Streamlit web UI
 
 ## 🚀 Quick Start
 
@@ -35,7 +37,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 3. Install dependencies:
 ```bash
-pip install langchain-groq langgraph python-dotenv google-auth-oauthlib google-auth-httplib2 google-api-python-client
+pip install langchain-groq langgraph python-dotenv google-auth-oauthlib google-auth-httplib2 google-api-python-client streamlit
 ```
 
 4. Set up your environment variables:
@@ -50,15 +52,36 @@ GROQ_API_KEY=your_groq_api_key_here
    - Enable Google Calendar API
    - Create OAuth 2.0 credentials (Desktop app)
    - Download and save as `credentials.json` in the project root
+   - **Important**: Set the OAuth scope to `https://www.googleapis.com/auth/calendar` (not readonly)
 
 ## 📖 Usage
 
-Run the agent:
+### Option 1: Streamlit Web Interface (Recommended)
+
+Run the web interface:
+```bash
+streamlit run app.py
+```
+
+This will open a browser window with a beautiful chat interface at `http://localhost:8501`
+
+**Features:**
+- 💬 Clean chat interface
+- 🎯 Quick action buttons in sidebar
+- 🔧 Tool call visibility
+- 📱 Mobile-friendly design
+- ❌ Clear chat history
+
+### Option 2: Command Line Interface
+
+Run the CLI version:
 ```bash
 python main.py
 ```
 
-### Example Conversations
+Type your queries and press Enter. Type `exit`, `quit`, or `stop` to end the session.
+
+## 💡 Example Conversations
 
 **List events:**
 ```
@@ -86,12 +109,21 @@ Changes made:
 Start: 2026-01-24T15:00:00
 ```
 
+**Delete an event:**
+```
+You: Delete "Dentist Appointment"
+Assistant: ✓ Event deleted successfully!
+Deleted: 'Dentist Appointment'
+Scheduled for: 2026-01-24T14:00:00
+```
+
 ## 🏗️ Project Structure
 
 ```
 calendar-agent/
 │
-├── main.py              # Main agent code with all tools and logic
+├── main.py              # Core agent logic with all tools
+├── app.py               # Streamlit web interface
 ├── auth_test.py         # Google Calendar authentication
 ├── .env                 # Environment variables (not tracked)
 ├── credentials.json     # Google API credentials (not tracked)
@@ -103,9 +135,11 @@ calendar-agent/
 ## 🛠️ Tech Stack
 
 - **LangGraph** - Agent orchestration and workflow management
-- **Groq** - Fast LLM inference (Llama 3.3 70B)
+- **Groq** - Fast LLM inference (Llama 3.3 70B Versatile)
 - **LangChain** - Tool integration and prompt management
 - **Google Calendar API** - Calendar operations
+- **Streamlit** - Web interface
+- **Python** - Backend logic
 
 ## 🔧 Configuration
 
@@ -142,10 +176,7 @@ MIT License - feel free to use this project for personal or commercial purposes.
 
 **Rishi**
 - LinkedIn: [linkedin.com/in/rishi-sujith-922554377](https://www.linkedin.com/in/rishi-sujith-922554377)
-
 - Email: rishisujith07@gmail.com
-
-
 
 ---
 

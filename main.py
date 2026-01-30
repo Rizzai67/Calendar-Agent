@@ -110,7 +110,7 @@ def create_event(
         created_event=service.events().insert(calendarId='primary',body=event).execute()
         return f"✓ Event created successfully!\n\nTitle: {summary}\nStart: {start_datetime}\nEnd: {end_datetime}\nEvent link: {created_event.get('htmlLink')}"
     except Exception as e:
-        return f"❌ Failed to create event: {str(e)}"
+        return f" Failed to create event: {str(e)}"
 @tool    
 def update_calendar_events(
         event_summary:str,
@@ -137,11 +137,13 @@ def update_calendar_events(
     """
     service = get_calendar_service()
     try:
-        now=datetime.now(timezone.utc).isoformat()
-        events_results=service.events().list(
+        from datetime import timedelta
+        one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        one_week_ago_iso = one_week_ago.isoformat()
+        
+        events_results = service.events().list(
             calendarId='primary',
-            timeMin=now,
-            maxResults=50,
+            timeMin=one_week_ago_iso,
             singleEvents=True,
             orderBy='startTime'
         ).execute()
@@ -160,7 +162,7 @@ def update_calendar_events(
         matching_events=exact_matches if exact_matches else partial_matches
                 
         if not matching_events:
-                return f"❌ No upcoming event found with title '{event_summary}'.try listing your events to see an exact title"
+                return f" No upcoming event found with title '{event_summary}'.try listing your events to see an exact title"
         
         #if multipple matches,return them for user to clarify
         if len(matching_events)>1:
@@ -168,7 +170,7 @@ def update_calendar_events(
             for i,event in enumerate(matching_events[:5],1):
                 start=event['start'].get('datetime',event['start'].get('date'))
                 match_list.append(f"{i}. '{event.get('summary')}' on {start}")
-            return f"⚠️ Found {len(matching_events)} events matching '{event_summary}':\n\n" + "\n".join(match_list) + "\n\nPlease be more specific with the event title and date/time to update the correct one."
+            return f" Found {len(matching_events)} events matching '{event_summary}':\n\n" + "\n".join(match_list) + "\n\nPlease be more specific with the event title and date/time to update the correct one."
         
         # Single match found - proceed with update
         target_event = matching_events[0]
@@ -214,9 +216,74 @@ def update_calendar_events(
         return f"✓ Event updated successfully!\n\nUpdated fields:\n" + "\n".join(updates) + f"\n\nEvent link: {updated_event.get('htmlLink')}"
             
     except Exception as e:
-        return f"❌ Failed to update event: {str(e)}"
+        return f" Failed to update event: {str(e)}"
+    
+@tool
+def delete_calendar_event(event_summary:str)->str:
+    """
+    Delete an event from the user's Google Calendar.
+    Searches for events that match the provided title and deletes them.
+    
+    Args:
+        event_summary: Title or partial title of the event to delete (required)
+    
+    Returns:
+        Confirmation message or list of matching events if multiple found
+    """
+    service=get_calendar_service()
+    try:
+        from datetime import timedelta
+        one_week_ago=(datetime.now(timezone.utc)-timedelta(days=7))
+        one_week_ago_iso=one_week_ago.isoformat()
+
+        event_results=service.events().list(
+            calendarId='primary',
+            timeMin=one_week_ago_iso,
+            maxResults=100,
+            singleEvents=True,
+            orderBy='startTime'
+
+        ).execute()
+        events=event_results.get('items',[])
+        search_term=event_summary.lower()
+        exact_matches=[]
+        partial_matches=[]
+
+        for event in events:
+            event_title=event.get('summary','').lower()
+            if event_title==search_term:
+                exact_matches.append(event)
+            elif search_term in event_title or event_title in search_term:
+                partial_matches.append(event)
+
+        matching_events=exact_matches if exact_matches else partial_matches
+        if not matching_events:
+            return f" No events found matching '{event_summary}'. Try listing your events first to see the exact titles."
+        
+        # If multiple matches, return them for user to clarify
+        if len(matching_events) > 1:
+            match_list = []
+            for i, event in enumerate(matching_events[:5], 1):  # Show max 5
+                start = event['start'].get('dateTime', event['start'].get('date'))
+                match_list.append(f"{i}. '{event.get('summary')}' on {start}")
+            
+            return f" Found {len(matching_events)} events matching '{event_summary}':\n\n" + "\n".join(match_list) + "\n\nPlease be more specific with the event title and date/time to delete the correct one."
+        
+        target_event=matching_events[0]
+        event_title=target_event.get('summary')
+        event_start=target_event['start'].get('dateTime',target_event['start'].get('date'))
+        #delete event
+        service.events().delete(
+            calendarId='primary',
+            eventId=target_event['id']
+        ).execute()
+        return f"Event deleted successfully!\n\nDeleted: '{event_title}'\nScheduled for: {event_start}"
+        
+    except Exception as e:
+        return f"Failed to delete event: {str(e)}"
+
 #%%
-tools = [list_calendar_event,current_dateTime,create_event,update_calendar_events]
+tools = [list_calendar_event,current_dateTime,create_event,update_calendar_events,delete_calendar_event]
 
 
 #convert tools to what groq expects
@@ -244,6 +311,11 @@ system_prompt = SystemMessage(content="""You are a helpful calendar assistant. W
     - You need the exact or partial current event title to find it
     - Only update the fields the user specifically mentions
     - Confirm what will be changed before updating
+    When deleting events:
+    - Confirm the event details before deletion
+    - Use fuzzy matching to find events
+    - If multiple matches, ask user to be more specific
+    - Always confirm successful deletion
     """
 )
 
@@ -274,7 +346,7 @@ if __name__=="__main__":
 
         #exit condition
         if user_input.lower() in (['quit','stop','exit']):
-            print("Goodbye!!! 😔💔")
+            print("Goodbye!!! 😔💔ig u hate me...fine bye")
             break
 
         #package user input into graph state
